@@ -1,0 +1,22 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/rotacerta_db
+    username: admin
+    password: admin
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  application:
+    name: rotacerta
+
+application:
+  security:
+    jwt:
+      secret-key: NGRmNTI1ZjZkYjM2NTM0YjM5MmM1OTYyN2M2ZTc4MzE2YjM4OTU3OWM5MjQ1ZGI5OWU4NzVjNzc0YjVjMmEyMw==
+      expiration: 86400000
+

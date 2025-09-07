@@ -23,10 +23,13 @@ public class Plan {
 	private String name;
 
 	@Column(nullable = false)
-	private BigDecimal price;
+	private Double price;
 
 	@Column(nullable = false)
 	private Integer quoteLimit;
+
+	@Column(name = "stripe_price_id", unique = true)
+	private String stripePriceId;
 
 	@Column(columnDefinition = "TEXT")
 	private String features;

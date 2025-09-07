@@ -17,22 +17,26 @@ import java.util.UUID;
 public class Quote {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+	@GeneratedValue(strategy=GenerationType.UUID)
+	private UUID id;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "user_id", nullable = false)
+	@ManyToOne(fetch=FetchType.LAZY)
+	@JoinColumn(name="user_id", nullable=false)
 	private User user;
 
-	@JdbcTypeCode(SqlTypes.JSON)
-	@Column(columnDefinition = "jsonb", nullable = false)
-	private String requestPayload;
+	@Column(name="origin_zip", nullable=false)
+	private String originZip;
+
+	@Column(name="dest_zip", nullable=false)
+	private String destZip;
 
 	@JdbcTypeCode(SqlTypes.JSON)
-	@Column(columnDefinition = "jsonb", nullable = false)
-	private String responsePayload;
+	@Column(columnDefinition="jsonb")
+	private String payload;
 
-	private String selectedService;
+	@JdbcTypeCode(SqlTypes.JSON)
+	@Column(columnDefinition="jsonb")
+	private String result;
 
 	@CreationTimestamp
 	private OffsetDateTime createdAt;

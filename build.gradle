@@ -33,6 +33,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'io.micrometer:context-propagation:1.1.1'
     implementation 'com.stripe:stripe-java:25.13.0'
+    implementation 'com.google.maps:google-maps-services:2.2.0'
     compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'

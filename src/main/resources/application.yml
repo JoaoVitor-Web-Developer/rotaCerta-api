@@ -6,7 +6,7 @@ spring:
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create-drop
     show-sql: true
     properties:
       hibernate:
@@ -28,7 +28,12 @@ application:
     stripe:
       secret-key: sk_test_51S4RLsPH4tTzeMs75FzjH0fiPqG7deuJOORA0dRuy7O4aEIjIMXZfjD1HJbwOdZIW4jfksM3tMIIspoIYb4BDcBM00udhI6CdI
       webhook-secret: whsec_70298bb0eb9d5fef43a7b1b65efb3ea246ac0cb0e72f9b13deb953a3042a772e
+  google:
+    maps:
+      api-key: AIzaSyAmBx3ZQSWiQB886b_6ZqGbYOlNNwTPrjg
 
 logging:
   level:
     org.springframework.security: DEBUG
+
+# chave api directionsAPI    AIzaSyAmBx3ZQSWiQB886b_6ZqGbYOlNNwTPrjg

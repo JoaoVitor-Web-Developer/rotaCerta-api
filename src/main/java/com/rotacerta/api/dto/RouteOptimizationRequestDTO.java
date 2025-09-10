@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -17,4 +18,6 @@ public class RouteOptimizationRequestDTO {
 	@NotEmpty(message = "É necessária pelo menos uma parada.")
 	@Size(min = 1, message = "É necessária pelo menos uma parada.")
 	private List<String> waypoints;
+
+	private UUID driverId;
 }

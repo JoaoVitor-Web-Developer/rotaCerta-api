@@ -8,17 +8,17 @@ import com.google.maps.model.DirectionsRoute;
 import com.google.maps.model.TravelMode;
 import com.rotacerta.api.dto.RouteOptimizationRequestDTO;
 import com.rotacerta.api.dto.RouteOptimizationResponseDTO;
-import com.rotacerta.api.model.entities.OptimizedRoute;
-import com.rotacerta.api.model.entities.RouteStop;
-import com.rotacerta.api.model.entities.User;
+import com.rotacerta.api.model.entities.*;
 import com.rotacerta.api.repository.OptimizedRouteRepository;
 import com.rotacerta.api.repository.RouteStopRepository;
+import com.rotacerta.api.repository.TrustedDriverRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -32,11 +32,14 @@ public class RouteOptimizationService {
 	private final GeoApiContext geoApiContext;
 	private final OptimizedRouteRepository optimizedRouteRepository;
 	private final RouteStopRepository routeStopRepository;
+	private final TrustedDriverRepository trustedDriverRepository;
 	private static final Logger log = LoggerFactory.getLogger(RouteOptimizationService.class);
 
 	@Transactional
 	public RouteOptimizationResponseDTO optimizeRoute(RouteOptimizationRequestDTO request, User user) {
 		try {
+			log.info("Iniciando otimização de rota para o utilizador: {}", user.getEmail());
+
 			DirectionsResult result = DirectionsApi.newRequest(geoApiContext)
 			                                       .origin(request.getOrigin())
 			                                       .destination(request.getOrigin())
@@ -50,16 +53,45 @@ public class RouteOptimizationService {
 			}
 
 			DirectionsRoute googleRoute = result.routes[0];
-			OptimizedRoute savedRoute = saveOptimizedRoute(googleRoute, user);
+
+			BigDecimal totalCost = null;
+			if (request.getDriverId() != null) {
+				TrustedDriver driver = trustedDriverRepository.findById(request.getDriverId())
+				                                              .orElseThrow(() -> new IllegalArgumentException("Entregador com o ID fornecido não foi encontrado."));
+
+				if (!driver.getUser().getId().equals(user.getId())) {
+					throw new SecurityException("Acesso negado. O entregador selecionado não pertence a este utilizador.");
+				}
+
+				totalCost = calculateCostForRoute(googleRoute, driver);
+			}
+
+			OptimizedRoute savedRoute = saveOptimizedRoute(googleRoute, user, totalCost);
 			return buildResponseDTO(savedRoute, googleRoute);
 
 		} catch (Exception e) {
-			log.error("Falha crítica ao otimizar rota para o usuário {}: {}", user.getEmail(), e.getMessage());
-			throw new RuntimeException("Não foi possível otimizar a rota. Verifique se os endereços são válidos e tente novamente.");
+			log.error("Falha crítica ao otimizar rota para o utilizador {}: {}", user.getEmail(), e.getMessage());
+			throw new RuntimeException("Não foi possível otimizar a rota. Verifique os endereços e tente novamente.");
 		}
 	}
 
-	private OptimizedRoute saveOptimizedRoute(DirectionsRoute googleRoute, User user) {
+	private BigDecimal calculateCostForRoute(DirectionsRoute googleRoute, TrustedDriver driver) {
+		long totalDistanceMeters = 0;
+		for (DirectionsLeg leg : googleRoute.legs) {
+			totalDistanceMeters += leg.distance.inMeters;
+		}
+		BigDecimal totalDistanceKm = BigDecimal.valueOf(totalDistanceMeters / 1000.0);
+
+		log.info("Distância total da rota: {} km. A procurar regra de preço para o entregador '{}'.", totalDistanceKm, driver.getName());
+
+		return driver.getPricingRules().stream()
+		             .filter(rule -> totalDistanceKm.compareTo(rule.getMinDistanceKm()) >= 0 && totalDistanceKm.compareTo(rule.getMaxDistanceKm()) <= 0)
+		             .findFirst()
+		             .map(PricingRule::getPrice)
+		             .orElse(null);
+	}
+
+	private OptimizedRoute saveOptimizedRoute(DirectionsRoute googleRoute, User user, BigDecimal totalCost) {
 		OptimizedRoute route = new OptimizedRoute();
 		route.setUser(user);
 
@@ -71,6 +103,7 @@ public class RouteOptimizationService {
 		}
 		route.setTotalDistanceMeters((int) totalDistance);
 		route.setTotalDurationSeconds((int) totalDuration);
+		route.setTotalCost(totalCost);
 
 		OptimizedRoute managedRoute = optimizedRouteRepository.save(route);
 
@@ -79,10 +112,8 @@ public class RouteOptimizationService {
 			stop.setRoute(managedRoute);
 			stop.setAddressText(googleRoute.legs[i].endAddress);
 			stop.setStopOrder(i + 1);
-
 			managedRoute.getStops().add(routeStopRepository.save(stop));
 		}
-
 		return managedRoute;
 	}
 
@@ -101,6 +132,7 @@ public class RouteOptimizationService {
 		                                   .totalDistance(formatDistance(savedRoute.getTotalDistanceMeters()))
 		                                   .totalDuration(formatDuration(savedRoute.getTotalDurationSeconds()))
 		                                   .googleMapsUrl(googleMapsUrl)
+		                                   .totalCost(savedRoute.getTotalCost())
 		                                   .build();
 	}
 

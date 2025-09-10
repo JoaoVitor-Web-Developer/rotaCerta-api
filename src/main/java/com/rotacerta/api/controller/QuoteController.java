@@ -30,8 +30,9 @@ public class QuoteController {
 	private final ObjectMapper objectMapper;
 
 	@PostMapping("/calculate")
-	public ResponseEntity<QuoteResponseDTO> calculate(@Valid @RequestBody QuoteRequestDTO request) {
-		Mono<QuoteResponseDTO> quoteResponseMono = shippingService.calculateShipping(request);
+	public ResponseEntity<QuoteResponseDTO> calculate(@Valid @RequestBody QuoteRequestDTO request, Authentication authentication) {
+		User user = (User) authentication.getPrincipal();
+		Mono<QuoteResponseDTO> quoteResponseMono = shippingService.calculateShipping(request, user);
 		QuoteResponseDTO response = quoteResponseMono.block(Duration.ofSeconds(10));
 		return ResponseEntity.ok(response);
 	}

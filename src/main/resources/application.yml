@@ -31,6 +31,10 @@ application:
   google:
     maps:
       api-key: AIzaSyAmBx3ZQSWiQB886b_6ZqGbYOlNNwTPrjg
+  nuvemshop:
+    client-id: 21298
+    client-secret: 595ab62c48ccedf8e3eee7b6c5644be364a36cdf6153df71
+    redirect-uri: "http://localhost:8080/api/integrations/nuvemshop/callback"
 
 logging:
   level:

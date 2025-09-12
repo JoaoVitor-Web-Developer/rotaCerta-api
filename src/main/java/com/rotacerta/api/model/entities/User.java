@@ -38,6 +38,12 @@ public class User implements UserDetails {
 
 	private boolean isActive = true;
 
+	@Column(name = "nuvemshop_store_id", unique = true)
+	private Long nuvemshopStoreId;
+
+	@Column(name = "nuveshop_access_token")
+	private String nuvemshopAccessToken;
+
 	@CreationTimestamp
 	private OffsetDateTime createdAt;
 
